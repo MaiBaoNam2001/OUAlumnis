@@ -8,6 +8,35 @@ from rest_framework.serializers import ValidationError
 from . import models, serializers
 
 
+class UserViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset = models.User.objects.filter(is_active=True)
+    serializer_class = serializers.UserSerializer
+
+    def get_permissions(self):
+        if self.action in ['current_user']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
+    @action(methods=['GET'], detail=False, url_path='current-user')
+    def current_user(self, request):
+        user = request.user
+        if user.role.code.__eq__('ALUMNI'):
+            alumni_profile = models.AlumniProfile.objects.get(user=user)
+            return Response(serializers.AlumniProfileSerializer(alumni_profile, context={'request': request}).data)
+        elif user.role.code.__eq__('LECTURER'):
+            lecturer_profile = models.LecturerProfile.objects.get(user=user)
+            if user.is_password_expired():
+                user.is_active = False
+                user.save()
+
+                lecturer_profile.is_locked = True
+                lecturer_profile.save()
+
+                return Response({'error': 'User account locked'}, status=status.HTTP_423_LOCKED)
+            return Response(serializers.LecturerProfileSerializer(lecturer_profile, context={'request': request}).data)
+        return Response(serializers.UserSerializer(user).data)
+
+
 class AlumniProfileViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = models.AlumniProfile.objects.filter(user__is_active=True)
     serializer_class = serializers.AlumniProfileSerializer

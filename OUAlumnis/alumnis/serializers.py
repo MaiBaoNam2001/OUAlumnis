@@ -38,3 +38,17 @@ class AlumniProfileSerializer(serializers.ModelSerializer):
         if obj.image:
             request = self.context.get('request')
             return request.build_absolute_uri('/static/%s' % obj.image.name) if request else ''
+
+
+class LecturerProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    image = serializers.SerializerMethodField(source='image')
+
+    class Meta:
+        model = models.LecturerProfile
+        fields = ['user', 'image', 'faculty', 'academic_rank', 'academic_degree', 'bio']
+
+    def get_image(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            return request.build_absolute_uri('/static/%s' % obj.image.name) if request else ''

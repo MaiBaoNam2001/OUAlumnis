@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 
 
 class BaseModel(models.Model):
@@ -75,6 +76,12 @@ class User(AbstractUser):
     avatar = models.ImageField(upload_to='avatars/%Y/%m', blank=True, null=True)
     cover_image = models.ImageField(upload_to='cover_images/%Y/%m', blank=True, null=True)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True)
+    password_reset_expiry = models.DateTimeField(blank=True, null=True)
+
+    def is_password_expired(self):
+        if self.password_reset_expiry is None:
+            return False
+        return timezone.now() >= self.password_reset_expiry
 
 
 class AlumniProfile(models.Model):
@@ -88,3 +95,13 @@ class AlumniProfile(models.Model):
     position = models.CharField(max_length=255, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     is_confirmed = models.BooleanField(default=False)
+
+
+class LecturerProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    image = models.ImageField(upload_to='images/%Y/%m')
+    faculty = models.ForeignKey(Faculty, on_delete=models.CASCADE)
+    academic_rank = models.ForeignKey(AcademicRank, on_delete=models.CASCADE)
+    academic_degree = models.ForeignKey(AcademicDegree, on_delete=models.CASCADE)
+    bio = models.TextField(blank=True, null=True)
+    is_locked = models.BooleanField(default=False)

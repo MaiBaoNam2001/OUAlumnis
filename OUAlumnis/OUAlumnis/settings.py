@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'alumnis.apps.AlumnisConfig',
     'rest_framework',
+    'oauth2_provider',
     'drf_yasg'
 ]
 
@@ -144,3 +145,20 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'oualumnis@gmail.com'
 
 EMAIL_HOST_PASSWORD = 'ovyu xnas nszu kxpa'
+
+# Rest Framework
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    )
+}
+
+# OAuth2
+
+OAUTH2_PROVIDER = {
+    'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'
+}
+
+CLIENT_ID = '8kWKQdFdPgGNHwn0cz23C16FL1moY6gyeUm3DiWd'
+CLIENT_SECRET = 'Xq1XvdeEs4czbatnCDptL1dJRtyDocRSpvBL5Wl5zCuYFVTpCjuoeW7lqjnt0z0KmhIivFr4D5GTBI500TVWQDVYA5xMaus34tKnVgAaBbtoeDEAld86ymaipe7uLbur'
