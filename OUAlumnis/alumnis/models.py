@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 class BaseModel(models.Model):
@@ -71,6 +72,7 @@ class AcademicDegree(BaseModel):
 
 
 class User(AbstractUser):
+    email = models.EmailField(_("email address"), unique=True)
     date_of_birth = models.DateField(blank=True, null=True)
     gender = models.ForeignKey(Gender, on_delete=models.CASCADE, blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/%Y/%m', blank=True, null=True)
@@ -94,7 +96,7 @@ class AlumniProfile(models.Model):
     workplace = models.CharField(max_length=255, blank=True, null=True)
     position = models.CharField(max_length=255, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
-    is_confirmed = models.BooleanField(default=False)
+    is_confirmed = models.BooleanField(default=True)
 
 
 class LecturerProfile(models.Model):

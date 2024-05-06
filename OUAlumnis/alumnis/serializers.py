@@ -2,6 +2,30 @@ from rest_framework import serializers
 from . import models
 
 
+class GenderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Gender
+        fields = ['code', 'name']
+
+
+class FacultySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Faculty
+        fields = ['code', 'name']
+
+
+class MajorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Major
+        fields = ['code', 'name', 'faculty']
+
+
+class SchoolYearSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.SchoolYear
+        fields = ['code', 'name']
+
+
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField(source='avatar')
     cover_image = serializers.SerializerMethodField(source='cover_image')

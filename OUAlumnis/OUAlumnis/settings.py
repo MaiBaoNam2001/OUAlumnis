@@ -26,7 +26,10 @@ SECRET_KEY = 'django-insecure-a_flmn3q&_&u0^$a8)8mq@uy%=sc-ie#_3vlv(%fg2rlbfek&*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    '192.168.1.6'
+]
 
 # Application definition
 
@@ -40,10 +43,12 @@ INSTALLED_APPS = [
     'alumnis.apps.AlumnisConfig',
     'rest_framework',
     'oauth2_provider',
-    'drf_yasg'
+    'drf_yasg',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -162,3 +167,7 @@ OAUTH2_PROVIDER = {
 
 CLIENT_ID = '8kWKQdFdPgGNHwn0cz23C16FL1moY6gyeUm3DiWd'
 CLIENT_SECRET = 'Xq1XvdeEs4czbatnCDptL1dJRtyDocRSpvBL5Wl5zCuYFVTpCjuoeW7lqjnt0z0KmhIivFr4D5GTBI500TVWQDVYA5xMaus34tKnVgAaBbtoeDEAld86ymaipe7uLbur'
+
+# CORS
+
+CORS_ALLOW_ALL_ORIGINS = True

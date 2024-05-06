@@ -22,9 +22,9 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Course API",
+        title="OU Alumnis API",
         default_version='v1',
-        description="APIs for CourseApp",
+        description="APIs for OU Alumnis App",
         contact=openapi.Contact(email="1951012075nam@ou.edu.vn"),
         license=openapi.License(name="Mai Bảo Nam@2024"),
     ),

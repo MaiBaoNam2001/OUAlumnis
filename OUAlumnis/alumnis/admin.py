@@ -96,10 +96,7 @@ class AlumniProfileAdmin(admin.ModelAdmin):
     def accept_selected_alumni_profiles_and_send_notification_mail(self, request, queryset):
         for alumni_profile in queryset:
             user = alumni_profile.user
-            if not alumni_profile.is_confirmed and not user.is_active:
-                user.is_active = True
-                user.save()
-
+            if not alumni_profile.is_confirmed:
                 alumni_profile.is_confirmed = True
                 alumni_profile.save()
 
@@ -118,7 +115,7 @@ class AlumniProfileAdmin(admin.ModelAdmin):
     def reject_selected_alumni_profiles_and_send_notification_mail(self, request, queryset):
         for alumni_profile in queryset:
             user = alumni_profile.user
-            if not alumni_profile.is_confirmed and not user.is_active:
+            if not alumni_profile.is_confirmed:
                 subject = 'Từ chối xác nhận tài khoản cựu sinh viên'
                 body = f"""
                     Xin chào {user.last_name} {user.first_name},
@@ -159,11 +156,10 @@ class LecturerProfileAdmin(admin.ModelAdmin):
     def unclock_selected_lecturer_profiles_and_send_notification_mail(self, request, queryset):
         for lecturer_profile in queryset:
             user = lecturer_profile.user
-            if lecturer_profile.is_locked and not user.is_active:
+            if lecturer_profile.is_locked:
                 lecturer_profile.is_locked = False
                 lecturer_profile.save()
 
-                user.is_active = True
                 user.password_reset_expiry = timezone.now() + timezone.timedelta(days=1)
                 user.save()
 
