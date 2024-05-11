@@ -45,7 +45,7 @@ def set_password_reset_expiry(sender, instance, created, **kwargs):
 
 
 @receiver(pre_save, sender=models.AlumniProfile)
-def delete_old_image(sender, instance, **kwargs):
+def delete_alumni_profile_old_image(sender, instance, **kwargs):
     if instance.pk:
         try:
             old_image = models.AlumniProfile.objects.get(user=instance.user).image
@@ -62,8 +62,26 @@ def delete_alumni_profile_image(sender, instance, **kwargs):
         instance.image.delete()
 
 
+@receiver(pre_save, sender=models.LecturerProfile)
+def delete_lecturer_profile_old_image(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old_image = models.LecturerProfile.objects.get(user=instance.user).image
+        except models.LecturerProfile.DoesNotExist:
+            old_image = None
+
+        if old_image and old_image.name != instance.image.name:
+            old_image.delete(save=False)
+
+
+@receiver(pre_delete, sender=models.LecturerProfile)
+def delete_lecturer_profile_image(sender, instance, **kwargs):
+    if instance.image:
+        instance.image.delete()
+
+
 @receiver(pre_save, sender=models.User)
-def delete_old_avatar(sender, instance, **kwargs):
+def delete_user_old_avatar(sender, instance, **kwargs):
     if instance.pk:
         try:
             old_avatar = models.User.objects.get(pk=instance.pk).avatar
@@ -75,7 +93,7 @@ def delete_old_avatar(sender, instance, **kwargs):
 
 
 @receiver(pre_save, sender=models.User)
-def delete_old_cover_image(sender, instance, **kwargs):
+def delete_user_old_cover_image(sender, instance, **kwargs):
     if instance.pk:
         try:
             old_cover_image = models.User.objects.get(pk=instance.pk).cover_image

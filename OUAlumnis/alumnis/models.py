@@ -72,9 +72,11 @@ class AcademicDegree(BaseModel):
 
 
 class User(AbstractUser):
-    email = models.EmailField(_("email address"), unique=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    gender = models.ForeignKey(Gender, on_delete=models.CASCADE, blank=True, null=True)
+    first_name = models.CharField(_('first name'), max_length=150)
+    last_name = models.CharField(_('last name'), max_length=150)
+    email = models.EmailField(_('email address'), unique=True)
+    date_of_birth = models.DateField(null=True)
+    gender = models.ForeignKey(Gender, on_delete=models.CASCADE, null=True)
     avatar = models.ImageField(upload_to='avatars/%Y/%m', blank=True, null=True)
     cover_image = models.ImageField(upload_to='cover_images/%Y/%m', blank=True, null=True)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True)

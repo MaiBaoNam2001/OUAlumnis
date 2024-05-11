@@ -1,3 +1,4 @@
+import inspect
 import json
 import traceback
 
@@ -35,19 +36,82 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView):
     serializer_class = serializers.UserSerializer
 
     def get_permissions(self):
-        if self.action in ['current_user']:
+        if self.action in ['current_user', 'check_password']:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
-    @action(methods=['GET'], detail=False, url_path='current-user')
+    def get_serializer_class(self):
+        if self.request.method.__eq__('GET'):
+            return serializers.UserGetSerializer
+        return serializers.UserSerializer
+
+    @action(methods=['GET', 'PUT'], detail=False, url_path='current-user')
     def current_user(self, request):
         user = request.user
+        if request.method.__eq__('PUT'):
+            try:
+                user_keys = [
+                    'first_name', 'last_name', 'username',
+                    'email', 'password', 'date_of_birth',
+                    'gender', 'avatar', 'cover_image'
+                ]
+                if user.role.code.__eq__('ALUMNI'):
+                    alumni_profile_keys = [
+                        'student_id', 'image', 'faculty', 'major',
+                        'school_year', 'workplace', 'position', 'bio'
+                    ]
+                    alumni_profile = models.AlumniProfile.objects.get(user=user)
+                    for key, value in request.data.items():
+                        if key in alumni_profile_keys:
+                            if key.__eq__('faculty'):
+                                alumni_profile.faculty = models.Faculty.objects.get(code=value)
+                            elif key.__eq__('major'):
+                                alumni_profile.major = models.Major.objects.get(code=value)
+                            elif key.__eq__('school_year'):
+                                alumni_profile.school_year = models.SchoolYear.objects.get(code=value)
+                            else:
+                                setattr(alumni_profile, key, value)
+                    alumni_profile.save()
+                elif user.role.code.__eq__('LECTURER'):
+                    lecturer_profile_keys = ['image', 'faculty', 'academic_rank', 'academic_degree', 'bio']
+                    lecturer_profile = models.LecturerProfile.objects.get(user=user)
+                    for key, value in request.data.items():
+                        if key in lecturer_profile_keys:
+                            if key.__eq__('faculty'):
+                                lecturer_profile.faculty = models.Faculty.objects.get(code=value)
+                            elif key.__eq__('academic_rank'):
+                                lecturer_profile.academic_rank = models.AcademicRank.objects.get(code=value)
+                            elif key.__eq__('academic_degree'):
+                                lecturer_profile.academic_degree = models.AcademicDegree.objects.get(code=value)
+                            else:
+                                setattr(lecturer_profile, key, value)
+                    lecturer_profile.save()
+
+                for key, value in request.data.items():
+                    if key in user_keys:
+                        if key.__eq__('gender'):
+                            user.gender = models.Gender.objects.get(code=value)
+                        elif key.__eq__('password'):
+                            if user.role.code.__eq__('LECTURER'):
+                                if not user.is_password_expired():
+                                    user.password_reset_expiry = None
+                                    user.set_password(value)
+                            else:
+                                user.set_password(value)
+                        else:
+                            setattr(user, key, value)
+                user.save()
+            except Exception as e:
+                traceback.print_exc()
+                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         if user.role.code.__eq__('ALUMNI'):
             alumni_profile = models.AlumniProfile.objects.get(user=user)
             if not alumni_profile.is_confirmed:
                 return Response({'error': 'User account is not confirmed'},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return Response(serializers.AlumniProfileSerializer(alumni_profile, context={'request': request}).data)
+            return Response(
+                serializers.AlumniProfileGetSerializer(alumni_profile, context={'request': request}).data)
         elif user.role.code.__eq__('LECTURER'):
             lecturer_profile = models.LecturerProfile.objects.get(user=user)
             if user.is_password_expired():
@@ -55,13 +119,25 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView):
                 lecturer_profile.save()
 
                 return Response({'error': 'User account is locked'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return Response(serializers.LecturerProfileSerializer(lecturer_profile, context={'request': request}).data)
-        return Response(serializers.UserSerializer(user).data)
+            return Response(
+                serializers.LecturerProfileGetSerializer(lecturer_profile, context={'request': request}).data)
+        return Response(serializers.UserGetSerializer(user, context={'request': request}).data)
+
+    @action(methods=['POST'], detail=False, url_path='check-password')
+    def check_password(self, request):
+        password = request.data['password']
+        is_user_password = request.user.check_password(password) if password else False
+        return Response({'result': is_user_password})
 
 
 class AlumniProfileViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = models.AlumniProfile.objects.filter(user__is_active=True)
     serializer_class = serializers.AlumniProfileSerializer
+
+    def get_serializer_class(self):
+        if self.request.method.__eq__('GET'):
+            return serializers.AlumniProfileGetSerializer
+        return serializers.AlumniProfileSerializer
 
     @action(methods=['POST'], detail=False, url_path='register')
     @transaction.atomic
@@ -103,7 +179,7 @@ class AlumniProfileViewSet(viewsets.ViewSet, generics.ListAPIView):
             alumni_profile.image = alumni_profile_data['image']
             alumni_profile.save()
 
-            serializer = serializers.AlumniProfileSerializer(alumni_profile, context={'request': request})
+            serializer = serializers.AlumniProfileGetSerializer(alumni_profile, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except (ValidationError, KeyError) as e:
             traceback.print_exc()

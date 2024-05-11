@@ -65,7 +65,15 @@ class UserAdmin(admin.ModelAdmin):
     list_filter = ['id', 'username', 'email', 'role']
     search_fields = ['first_name', 'last_name', 'username', 'email']
     exclude = ['password', 'is_superuser', 'is_staff', 'is_active']
+    readonly_fields = ['avt', 'cover_img']
     form = UserForm
+
+    def avt(self, obj):
+        return mark_safe('<img src="/static/{url}" width="120" />'.format(url=obj.avatar.name)) if obj.avatar else ''
+
+    def cover_img(self, obj):
+        return mark_safe(
+            '<img src="/static/{url}" width="120" />'.format(url=obj.cover_image.name)) if obj.cover_image else ''
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
