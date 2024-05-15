@@ -1,3 +1,4 @@
+from ckeditor_uploader.widgets import CKEditorUploadingWidget
 from django import forms
 from django.conf import settings
 from django.contrib import admin
@@ -184,6 +185,40 @@ class LecturerProfileAdmin(admin.ModelAdmin):
                 send_mail(subject, body, settings.EMAIL_HOST_USER, [user.email])
 
 
+class PostForm(forms.ModelForm):
+    content = forms.CharField(widget=CKEditorUploadingWidget)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['user'].queryset = models.User.objects.exclude(id=1)
+
+    class Meta:
+        model = models.Post
+        fields = '__all__'
+
+
+class PostAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'content', 'created_at', 'is_active']
+    list_filter = ['id', 'user', 'created_at']
+    form = PostForm
+
+
+class InteractionTypeAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'is_active']
+    list_filter = ['code', 'name']
+    search_fields = ['name']
+    readonly_fields = ['icon_svg']
+
+    def icon_svg(self, obj):
+        return mark_safe('<img src="/static/{url}" width="120" />'.format(url=obj.icon.name)) if obj.icon else ''
+
+
+class NotificationTypeAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'is_active']
+    list_filter = ['code', 'name']
+    search_fields = ['name']
+
+
 admin.site.register(models.Gender, GenderAdmin)
 admin.site.register(models.Role, RoleAdmin)
 admin.site.register(models.Faculty, FacultyAdmin)
@@ -194,3 +229,6 @@ admin.site.register(models.AcademicDegree, AcademicDegreeAdmin)
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.AlumniProfile, AlumniProfileAdmin)
 admin.site.register(models.LecturerProfile, LecturerProfileAdmin)
+admin.site.register(models.Post, PostAdmin)
+admin.site.register(models.InteractionType, InteractionTypeAdmin)
+admin.site.register(models.NotificationType, NotificationTypeAdmin)

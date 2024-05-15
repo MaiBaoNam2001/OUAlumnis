@@ -1,3 +1,5 @@
+import os.path
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models.signals import post_save, pre_save, pre_delete
@@ -5,6 +7,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 from . import models
+from .utils import extract_image_urls
 
 
 @receiver(post_save, sender=models.User)
@@ -114,3 +117,52 @@ def delete_user_avatar(sender, instance, **kwargs):
 def delete_user_cover_image(sender, instance, **kwargs):
     if instance.cover_image:
         instance.cover_image.delete()
+
+
+@receiver(pre_save, sender=models.InteractionType)
+def delete_interaction_type_old_icon(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old_icon = models.InteractionType.objects.get(code=instance.code).icon
+        except models.InteractionType.DoesNotExist:
+            old_icon = None
+
+        if old_icon and old_icon.name != instance.icon.name:
+            old_icon.delete(save=False)
+
+
+@receiver(pre_delete, sender=models.InteractionType)
+def delete_interaction_type_icon(sender, instance, **kwargs):
+    if instance.icon:
+        instance.icon.delete()
+
+
+@receiver(pre_save, sender=models.Post)
+def delete_post_old_content_images(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old_content = models.Post.objects.get(pk=instance.pk).content
+        except models.Post.DoesNotExist:
+            old_content = None
+
+        if old_content and old_content != instance.content:
+            old_image_urls = extract_image_urls(old_content)
+            image_urls = extract_image_urls(instance.content)
+
+            if old_image_urls != image_urls:
+                for old_image_url in old_image_urls:
+                    if old_image_url not in image_urls:
+                        old_image_path = f'{settings.BASE_DIR}/alumnis/{old_image_url}'
+                        if os.path.exists(old_image_path):
+                            os.remove(old_image_path)
+
+
+@receiver(pre_delete, sender=models.Post)
+def delete_post_content_images(sender, instance, **kwargs):
+    if instance.content:
+        image_urls = extract_image_urls(instance.content)
+
+        for image_url in image_urls:
+            image_path = f'{settings.BASE_DIR}/alumnis/{image_url}'
+            if os.path.exists(image_path):
+                os.remove(image_path)

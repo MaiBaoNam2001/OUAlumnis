@@ -119,3 +119,9 @@ class LecturerProfileGetSerializer(LecturerProfileSerializer):
     class Meta:
         model = LecturerProfileSerializer.Meta.model
         fields = LecturerProfileSerializer.Meta.fields
+
+
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Post
+        fields = ['id', 'user', 'content', 'is_comment_locked', 'created_at']

@@ -1,4 +1,6 @@
+from ckeditor.fields import RichTextField
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -109,3 +111,60 @@ class LecturerProfile(models.Model):
     academic_degree = models.ForeignKey(AcademicDegree, on_delete=models.CASCADE)
     bio = models.TextField(blank=True, null=True)
     is_locked = models.BooleanField(default=False)
+
+
+class Post(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = RichTextField()
+    is_comment_locked = models.BooleanField(default=False)
+
+
+class Comment(BaseModel):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+
+    def __str__(self):
+        return self.content
+
+
+class InteractionType(BaseModel):
+    code = models.CharField(max_length=255, primary_key=True)
+    name = models.CharField(max_length=255, unique=True)
+    icon = models.FileField(upload_to='icons', validators=[FileExtensionValidator(['svg'])], unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Interaction(BaseModel):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    interaction_type = models.ForeignKey(InteractionType, on_delete=models.CASCADE)
+    is_interacted = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.is_interacted
+
+    class Meta:
+        unique_together = ('post', 'user')
+
+
+class NotificationType(BaseModel):
+    code = models.CharField(max_length=255, primary_key=True)
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Notification(BaseModel):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_notifications')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    notification_type = models.ForeignKey(NotificationType, on_delete=models.CASCADE)
+    content = models.CharField(max_length=255)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.content
